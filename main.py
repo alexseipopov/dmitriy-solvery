@@ -1,11 +1,12 @@
-from flask import Flask, request
-from flask_sqlalchemy import SQLAlchemy
 import sqlalchemy as sa
-import random
+from flask import Flask, request
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask("test application")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.sqlite"
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 class User(db.Model):
@@ -69,4 +70,5 @@ def auth():
     return "OK"
 
 
-app.run(debug=True)
+if __name__ == "__main__":
+    app.run(debug=True, port=3010)
