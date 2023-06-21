@@ -2,6 +2,7 @@ import sqlalchemy as sa
 from flask import Flask, request
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from test import a, b
 
 app = Flask("test application")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.sqlite"
@@ -89,7 +90,7 @@ def auth():
     return "OK"
 
 
-@app.post("/create_card")
+@app.post("/card")
 def create_card():
     name = request.form.get("name")
     description = request.form.get("description")
@@ -108,7 +109,7 @@ def create_card():
     })
 
 
-@app.get("/get_cards")
+@app.get("/card")
 def get_cards():
     cards = Card.query.all()
     response_data = []
@@ -121,6 +122,46 @@ def get_cards():
             "is_active": card.is_active
         })
     return create_response(data=response_data)
+
+
+def prepare_data():
+    var = ["name", "description", "price"]
+    data = {}
+    for label in var:
+        if request.form.get(label):
+            data.setdefault(label, request.form.get(label))
+    return data
+
+
+@app.patch("/card")
+def change_card():
+    id = request.form.get("id")
+    if not id:
+        return create_response("Failure", 1, "No such data in request"), 400
+    card = Card.query.filter_by(id=id).first()
+    if not card:
+        return create_response("FAILURE", 3, "no such info in db")
+    data = prepare_data()
+
+    card.name = data["name"] if "name" in data else card.name
+    card.description = data["description"] if "description" in data else card.description
+    card.price = data["price"] if "price" in data else card.price
+
+    db.session.commit()
+
+    print(data)
+    return create_response()
+
+
+@app.delete("/card")
+def delete_card():
+    id = request.form.get("id")
+    if not id:
+        return create_response("Failure", 1, "No such data in request"), 400
+    card = Card.query.filter_by(id=id).first()
+    db.session.delete(card)
+    db.session.commit()
+    return create_response()
 
 
 if __name__ == "__main__":
